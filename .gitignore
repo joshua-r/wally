@@ -1,3 +1,6 @@
+# ignore file containing the app key
+APP_KEY
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
