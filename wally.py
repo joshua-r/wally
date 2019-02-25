@@ -1,34 +1,56 @@
 #!/usr/bin/env python3
 
+'''Retrieve a random photo from Unsplash'''
+
+import argparse
 import requests
-import subprocess
 
 APP_KEY_FILE = 'APP_KEY'
 UNSPLASH_API_URL = 'https://api.unsplash.com'
-WALLPAPER_FILE = '/tmp/wallpaper'
-WALLPAPER_SET_CMD = ['feh', '--bg-scale']
+
+
+def read_file(filename):
+    '''Read a text file as a string'''
+    with open(filename, mode='r') as text_file:
+        return text_file.read()
+
+
+def write_image(image, filename):
+    '''Write the image into a file'''
+    with open(filename, mode='wb') as image_file:
+        image_file.write(image)
 
 
 def main():
-    with open(APP_KEY_FILE, mode='r') as app_key_file:
-        APP_KEY = app_key_file.read()
+    '''Retrieve a random photo from Unsplash'''
+    # setup argparse
+    parser = argparse.ArgumentParser(
+        description='Get a random photo from unsplash.')
+    parser.add_argument('--featured', action='store_true',
+                        help='restrict to featured photos')
+    parser.add_argument('--query',
+                        default='wallpaper', help='term to search for')
+    parser.add_argument('--filename',
+                        default='/tmp/wallpaper.jpg', help='filename for the retrieved photo')
+    args = parser.parse_args()
 
+    # read the app key
+    app_key = read_file(filename=APP_KEY_FILE)
+
+    # request a single random photo
     session = requests.session()
     params = {
-        'client_id': APP_KEY,
+        'client_id': app_key,
         'orientation': 'landscape',
-        'featured': True
+        'query': args.query,
+        'featured': args.featured
     }
     response = session.get(UNSPLASH_API_URL + '/photos/random/', params=params)
     image_url = response.json()['urls']['full']
     image_response = session.get(image_url)
 
-    with open(WALLPAPER_FILE, mode='wb') as wallpaper_file:
-        wallpaper_file.write(image_response.content)
-
-    subprocess.run(WALLPAPER_SET_CMD + [WALLPAPER_FILE])
-
-    return True
+    # write the retrieved image
+    write_image(image=image_response.content, filename=args.filename)
 
 
 if __name__ == '__main__':
